@@ -7,29 +7,29 @@ top_n=10 # -n verilmezse 10 öğre göstersin
 # Parametrenin olmadığı durum
 if [ $# -eq 0 ]; then
     echo "usage: disk_usage.sh [-a -n N] directory..."
-    exit 1
+    exit 1 # 0 --> success / 1-255 arası ise --> error durumu
 fi
 
-# Pararmetreli durum kontrolü
-while getopts ":an:" opt; do
+# Parametreli durum kontrolü
+while getopts ":an:" opt; do  # : -> sessiz hata modunu temsil eder. Otomatik hata mesajları yerine manuel hata mesajları verilmesi hedeflenir.
     case $opt in
         a)
             # -a parametresinin odluğu durumda dosyalar da listelenecek
             include_files=true
             ;;
         n)  #-n verilmişse top_n=$OPTARG ile girilen değerin sayısal olup olmadığını kontrol edecek
-            top_n=$OPTARG
+            top_n=$OPTARG # parametre olarak gönderilen -n dosya sayısını top_n degiskenine atadık.
             if ! [[ "$top_n" =~ ^[0-9]+$ ]]; then
                 echo "Error: -n requires a numeric argument"
                 exit 1
             fi
             ;;
         :)
-            # -n yazılıp sayı verilmediği durum hatası kontrol edilecek
+            # -n yazılıp sayı verilmediği durum hatası kontrol edilecek --> disk_usage.sh -n
             echo "Error: -n requires a numeric argument"
             exit 1
             ;;
-        \?) # Geçersiz parametre verilirse hata dönecek
+        \?) # Geçersiz parametre verilirse hata dönecek --> disk_usage.sh -x
             echo "Invalid option: -$OPTARG"
             echo "usage: disk_usage.sh [-a -n N] directory..."
             exit 1
@@ -47,6 +47,7 @@ if [ $# -eq 0 ]; then
 fi
 
 # Her dizin için ayrı ayrı kontrol saglanacak
+# $@ --> tüm dizin argümanlarını gezecek ve dir degiskenine atayacak (/etc /var)
 for dir in "$@"; do
     if [ ! -d "$dir" ]; then # Dizinin olup olmadığı kontrol ediliyor
         echo "Error: $dir is not a valid directory"
@@ -55,9 +56,15 @@ for dir in "$@"; do
 
     if [ "$include_files" = true ]; then                          # -a varsa dosyaları da dahil edecek
         du -ah "$dir" 2>/dev/null | sort -h -r | head -n "$top_n" # en büyük N tane dosya/dizin sıralanacak
+                                                                  # 2-->stderr kodu
                                                                   
     else                                                           #sadece dizi/dizinler sıralanacak 
         du -h "$dir" 2>/dev/null | sort -h -r | head -n "$top_n"   #en büyük N dizini sıralayacak
                                                                    # if sonu    
     fi
 done
+
+
+# 0 --> STDIN --> Giriş
+# 1 --> STDOUT --> Normal Çıktı
+# 2 --> STDERR --> Hata Çıktısı
